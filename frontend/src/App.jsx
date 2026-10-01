@@ -154,6 +154,17 @@ function Dashboard() {
               </p>
             </div>
           </div>
+          <div className="info-section">
+  <h2>Forecast Summary</h2>
+
+  <p>
+    The application uses ARIMA(0,1,0) to generate a
+    30-business-day Crack321 forecast. The current point
+    forecast is based on the latest available observation,
+    while the forecast interval provides lower and upper
+    bounds that widen over the forecast horizon.
+  </p>
+</div>
         </>
       ) : (
         <p>Unable to load dashboard data.</p>
@@ -164,14 +175,18 @@ function Dashboard() {
 
 
 function Historical() {
-  const [historicalData, setHistoricalData] = useState([]);
+  const [data, setData] = useState([]);
+  const [searchDate, setSearchDate] = useState("");
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const rowsPerPage = 20;
 
   useEffect(() => {
     axios
       .get("http://127.0.0.1:8000/api/data/historical")
       .then((response) => {
-        setHistoricalData(response.data);
+        setData(response.data);
         setLoading(false);
       })
       .catch((error) => {
@@ -180,47 +195,128 @@ function Historical() {
       });
   }, []);
 
+  const filteredData = data.filter((row) =>
+    row.Date.toLowerCase().includes(searchDate.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+
+  const startIndex = (currentPage - 1) * rowsPerPage;
+
+  const currentData = filteredData.slice(
+    startIndex,
+    startIndex + rowsPerPage
+  );
+
   return (
     <div className="page">
       <h1>Historical Data</h1>
 
       <p>
-        Historical crude oil prices and Crack321 values
-        from the project dataset.
+        Historical petroleum price data and calculated Crack321 values
+        from the processed dataset.
       </p>
 
       {loading ? (
         <p>Loading historical data...</p>
       ) : (
-        <div className="table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>WTI</th>
-                <th>Brent</th>
-                <th>Gasoline</th>
-                <th>Diesel</th>
-                <th>Jet Fuel</th>
-                <th>Crack321</th>
-              </tr>
-            </thead>
+        <>
+          <div className="cards">
+            <div className="card">
+              <h3>Total Observations</h3>
+              <p className="value">{data.length}</p>
+            </div>
 
-            <tbody>
-              {historicalData.map((row, index) => (
-                <tr key={index}>
-                  <td>{row.Date}</td>
-                  <td>{row.WTI}</td>
-                  <td>{row.Brent}</td>
-                  <td>{row.Gasoline_NY}</td>
-                  <td>{row.Diesel_NY}</td>
-                  <td>{row.JetFuel}</td>
-                  <td>{Number(row.Crack321).toFixed(3)}</td>
+            <div className="card">
+              <h3>Displayed Records</h3>
+              <p className="value">{filteredData.length}</p>
+            </div>
+
+            <div className="card">
+              <h3>Start Date</h3>
+              <p className="value">
+                {data.length > 0 ? data[0].Date : "-"}
+              </p>
+            </div>
+
+            <div className="card">
+              <h3>End Date</h3>
+              <p className="value">
+                {data.length > 0
+                  ? data[data.length - 1].Date
+                  : "-"}
+              </p>
+            </div>
+          </div>
+
+          <div className="search-container">
+            <input
+              type="text"
+              placeholder="Search by date, e.g. 2026-09"
+              value={searchDate}
+              onChange={(e) => {
+                setSearchDate(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
+
+          <div className="table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>WTI</th>
+                  <th>Brent</th>
+                  <th>Gasoline NY</th>
+                  <th>Diesel NY</th>
+                  <th>Jet Fuel</th>
+                  <th>Crack321</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+
+              <tbody>
+                {currentData.map((row, index) => (
+                  <tr key={index}>
+                    <td>{row.Date}</td>
+                    <td>{Number(row.WTI).toFixed(3)}</td>
+                    <td>{Number(row.Brent).toFixed(3)}</td>
+                    <td>{Number(row.Gasoline).toFixed(3)}</td>
+                    <td>{Number(row.Diesel).toFixed(3)}</td>
+                    <td>{Number(row.JetFuel).toFixed(3)}</td>
+                    <td>{Number(row.Crack321).toFixed(3)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="pagination">
+              <button
+                onClick={() =>
+                  setCurrentPage((page) => Math.max(page - 1, 1))
+                }
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
+
+              <span>
+                Page {currentPage} of {totalPages || 1}
+              </span>
+
+              <button
+                onClick={() =>
+                  setCurrentPage((page) =>
+                    Math.min(page + 1, totalPages)
+                  )
+                }
+                disabled={currentPage >= totalPages}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
@@ -278,33 +374,57 @@ function Forecast() {
           <h2>Forecast Trend</h2>
 
           <div className="chart-container">
-            <ResponsiveContainer width="100%" height={400}>
-              <LineChart data={forecastData}>
-                <CartesianGrid strokeDasharray="3 3" />
+            <div className="chart-container">
+  <ResponsiveContainer width="100%" height={400}>
+    <LineChart data={forecastData}>
+      <CartesianGrid strokeDasharray="3 3" />
 
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 12 }}
-                />
+      <XAxis
+        dataKey="date"
+        tick={{ fontSize: 11 }}
+        minTickGap={25}
+      />
 
-                <YAxis />
+      <YAxis />
 
-                <Tooltip
-                  formatter={(value) => [
-                    Number(value).toFixed(3),
-                    "Forecast",
-                  ]}
-                />
+      <Tooltip
+        formatter={(value, name) => [
+          Number(value).toFixed(3),
+          name,
+        ]}
+      />
 
-                <Line
-                  type="monotone"
-                  dataKey="forecast"
-                  stroke="#0f172a"
-                  strokeWidth={3}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+      <Line
+        type="monotone"
+        dataKey="upper"
+        name="Upper Bound"
+        stroke="#94a3b8"
+        strokeWidth={1.5}
+        strokeDasharray="5 5"
+        dot={false}
+      />
+
+      <Line
+        type="monotone"
+        dataKey="forecast"
+        name="Forecast"
+        stroke="#0f172a"
+        strokeWidth={3}
+        dot={false}
+      />
+
+      <Line
+        type="monotone"
+        dataKey="lower"
+        name="Lower Bound"
+        stroke="#94a3b8"
+        strokeWidth={1.5}
+        strokeDasharray="5 5"
+        dot={false}
+      />
+    </LineChart>
+  </ResponsiveContainer>
+</div>
           </div>
 
           <h2>Forecast Values</h2>
@@ -395,7 +515,7 @@ function Performance() {
 
           <h2>Metric Definitions</h2>
 
-          <div className="cards">
+          <div className="metric-cards">
             <div className="card">
               <h3>MAE</h3>
               <p>

@@ -27,8 +27,8 @@ function Dashboard() {
 
   useEffect(() => {
     Promise.all([
-      axios.get("http://127.0.0.1:8000/api/data/latest"),
-      axios.get("http://127.0.0.1:8000/api/data/historical"),
+      axios.get("https://crude-oil-forcasting-model.onrender.com/api/data/latest"),
+      axios.get("https://crude-oil-forcasting-model.onrender.com/api/data/historical"),
     ])
       .then(([latestResponse, historicalResponse]) => {
         setLatest(latestResponse.data);
@@ -184,7 +184,7 @@ function Historical() {
 
   useEffect(() => {
     axios
-      .get("http://127.0.0.1:8000/api/data/historical")
+      .get("https://crude-oil-forcasting-model.onrender.com/api/data/historical")
       .then((response) => {
         setData(response.data);
         setLoading(false);
@@ -329,7 +329,7 @@ function Forecast() {
 
   useEffect(() => {
     axios
-      .get("http://127.0.0.1:8000/api/forecast")
+      .get("https://crude-oil-forcasting-model.onrender.com/api/forecast")
       .then((response) => {
         setForecastData(response.data.forecast);
         setLoading(false);
@@ -467,7 +467,7 @@ function Performance() {
 
   useEffect(() => {
     axios
-      .get("http://127.0.0.1:8000/api/data/model-performance")
+      .get("https://crude-oil-forcasting-model.onrender.com/api/data/model-performance")
       .then((response) => {
         setModels(response.data);
         setLoading(false);

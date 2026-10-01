@@ -41,3 +41,15 @@ def get_statistics():
         "maximum_crack321": float(crack.max()),
         "std_crack321": float(crack.std())
     }
+
+@router.get("/model-performance")
+def get_model_performance():
+    performance_path = (
+        Path(__file__).resolve().parents[2]
+        / "results"
+        / "model_comparison.csv"
+    )
+
+    df = pd.read_csv(performance_path)
+
+    return df.to_dict(orient="records")

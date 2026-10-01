@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from backend.routes import data
+from fastapi.middleware.cors import CORSMiddleware
+from backend.routes import data, forecast
 
 app = FastAPI(
     title="Crude Oil Forecasting API",
@@ -7,8 +8,17 @@ app = FastAPI(
     version="1.0.0"
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 app.include_router(data.router, prefix="/api/data", tags=["Data"])
+app.include_router(forecast.router, prefix="/api", tags=["Forecast"])
 
 
 @app.get("/")
